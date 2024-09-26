@@ -3,6 +3,7 @@ import numpy as np
 from lists import authors
 import model
 
+
 def get_file_path():
     default_filename = "input.txt"
 
@@ -21,13 +22,11 @@ def get_file_path():
             print("File not found. Please try again.")
 
 
-
-
-
 def main():
+    get_all_words(authors)
+
     model.get_dataset()
-
-
+    model.train()
 
 
 main()

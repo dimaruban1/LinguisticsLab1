@@ -13,6 +13,15 @@ uk_stopwords = set(stopwords)
 unique_words = set()
 
 
+def get_all_words(authors):
+    for author in authors:
+        texts = get_author_texts(author)
+        for text in texts:
+            words = (nltk.word_tokenize(text.lower()))
+            for word in words:
+                unique_words.add(word)
+
+
 def get_author_texts(author):
     print("READING PLEASE WAIT...")
     texts = []
@@ -42,13 +51,12 @@ def get_vectors_from_text(text, skip_normalize=True):
     a = np.concatenate((get_vector_from_dick(dicts["punctuation"], list(string.punctuation)),
                     get_vector_from_dick(dicts["stopwords"], uk_stopwords),
                     get_vector_from_dick(dicts["bow"], unique_words)))
-    return np.append(a, avg_sent_len)
+    return a
 
 
 def process_text(text, skip_normalize=True):
     avg_sentence_length = 0
 
-    words = []
     normalized_words = []
     sentences = []
     sentences_length = 0
@@ -79,7 +87,6 @@ def process_text(text, skip_normalize=True):
         if not skip_normalize:
             normalized_word = normalize_word(word)
 
-        unique_words.add(normalized_word)
         normalized_words.append(normalized_word)
     print("another text processed")
 
@@ -115,54 +122,31 @@ def get_frequency_dicts(words):
     return vectors
 
 
-def cosine_similarity(a, b):
-    print(a, b)
-    if len(b) != len(a):
-        a = np.pad(a, (0, max(len(a), len(b)) - len(a)), mode='constant')
-        b = np.pad(b, (0, max(len(a), len(b)) - len(b)), mode='constant')
-
-    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-
-
 def normalize_word(word):
     morph = pymorphy2.MorphAnalyzer(lang='uk')
     p = morph.parse(word)[0].normal_form
     return p
 
 
-def compare_authors(vectors_a, vectors_b, avg_sentence_len_a, avg_sentence_len_b):
-    # Calculate cosine similarity for the 3 feature vectors
-    similarities = []
-
-    for key in vectors_a.keys():
-        sim = cosine_similarity(vectors_a[key], vectors_b[key])
-        similarities.append(sim)
-
-    # Normalize the sentence length difference
-    sentence_length_diff = abs(avg_sentence_len_a - avg_sentence_len_b)
-
-    # Combine the similarities (higher is better for cosine) and penalize sentence length differences
-    # You could adjust the weights based on how much importance you want to give to sentence length vs vectors
-    print(similarities)
-    print(sentence_length_diff)
-    combined_score = similarities[0] / 1000 + similarities[1] / 10 + similarities[2] - sentence_length_diff / 10000
-
-    return combined_score
-
-
 def get_author_dataset(author):
     texts = get_author_texts(author)
     batches = []
+    sentences_count = []
+
     for text in texts:
         batch_text = ""
         sentences = nltk.sent_tokenize(text.lower())
         i = 0
+        j = 0
         while i < len(sentences):
             batch_text += sentences[i]
-            if len(batch_text) < 30000:
+            j += 1
+            if len(batch_text) > 2000:
                 batches.append(batch_text)
                 batch_text = ""
+                sentences_count.append(30000 / j)
+                j = 0
 
             i += 1
 
-    return batches
+    return batches, sentences_count
