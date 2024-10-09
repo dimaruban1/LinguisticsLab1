@@ -2,6 +2,7 @@ from functions import *
 import numpy as np
 from lists import authors
 import model
+from sklearn.metrics import accuracy_score
 
 
 def get_batches_txt():
@@ -37,12 +38,13 @@ def main():
     model.unique_ngrams = top_ngrams
 
     model.get_dataset()
-    model.train()
+    rf_models = model.train()
 
-    # model.save_all()
-    # model.get_author_batches("vyshnia")
-    # model.save_all()
-    # get_batches_txt()
+    for rf_model in rf_models:
+        y_pred = rf_model[0].predict(rf_model[1][0])
+        # Evaluate the model's performance
+        accuracy = accuracy_score(rf_model[1][1], y_pred)
+        print(f"Accuracy: {accuracy}")
 
 
 main()

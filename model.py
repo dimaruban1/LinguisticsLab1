@@ -120,15 +120,18 @@ def get_rf_classifier(data):
     rf_feature = RandomForestClassifier()
     rf_feature.fit(x_train, y_train)
 
-    return rf_feature
+    return rf_feature, [x_test, y_test]
 
 
 def train():
-    rf_punctuation = get_rf_classifier(dataset_punctuation)
-    rf_stopwords = RandomForestClassifier(dataset_stopwords)
-    rf_ngrams = RandomForestClassifier(dataset_ngrams)
-    rf_avg_len = RandomForestClassifier(dataset_avg_len)
-    return [rf_punctuation, rf_stopwords, rf_ngrams, rf_avg_len]
+    rf_punctuation, data1 = get_rf_classifier(dataset_punctuation)
+    rf_stopwords, data2 = get_rf_classifier(dataset_stopwords)
+    rf_ngrams, data3 = get_rf_classifier(dataset_ngrams)
+    rf_avg_len, data4 = get_rf_classifier(dataset_avg_len)
+    return [[rf_punctuation, data1],
+            [rf_stopwords, data2],
+            [rf_ngrams, data3],
+            [rf_avg_len, data4]]
 
 
 def normalize_word(word):
