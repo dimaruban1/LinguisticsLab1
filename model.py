@@ -10,7 +10,12 @@ from sklearn.metrics import accuracy_score, classification_report
 scaler = StandardScaler()
 
 author_labels = []
-dataset_vectors = []
+
+dataset_punctuation = []
+dataset_stopwords = []
+dataset_ngrams = []
+dataset_avg_len = []
+
 scaled_features = []
 unique_ngrams = {}
 top_ngrams = {}
@@ -74,12 +79,12 @@ def get_vectors_from_text(text, skip_normalize=True):
             stopwords_vectors[word] += 1
 
     bow = Counter(ngrams)
-    a = np.concatenate((get_vector_from_dick(punctuation_vectors, list(string.punctuation)),
-                        get_vector_from_dick(stopwords_vectors, uk_stopwords),
-                        get_vector_from_dick(bow, unique_ngrams)))
-    np.append(a, [avg_sent_len])
 
-    return a
+    punctuation_vector = get_vector_from_dick(punctuation_vectors, list(string.punctuation))
+    stopwords_vector = get_vector_from_dick(stopwords_vectors, uk_stopwords)
+    ngrams = get_vector_from_dick(bow, unique_ngrams)
+
+    return {"punctuation": punctuation_vector, "stopword": stopwords_vector, "ngrams": ngrams, "avg":  [avg_sent_len]}
 
 
 def get_dataset():
@@ -88,10 +93,12 @@ def get_dataset():
         author_labels.extend([author] * len(texts))
 
         for i, text in enumerate(texts):
-            dataset_vectors.append(get_vectors_from_text(text))
-
+            vectors = get_vectors_from_text(text)
+            dataset_punctuation.append(vectors["punctuation"])
+            dataset_stopwords.append(vectors["stopword"])
+            dataset_ngrams.append(vectors["ngrams"])
+            dataset_avg_len.append(vectors["avg"])
     # scaled_features.append(scaler.fit_transform(dataset_vectors))
-    return dataset_vectors, author_labels
 
 
 def get_author_dataset(author):
@@ -99,31 +106,29 @@ def get_author_dataset(author):
     author_labels.extend([author] * len(texts))
 
     for i, text in enumerate(texts):
-        dataset_vectors.append(get_vectors_from_text(text))
-
+        vectors = get_vectors_from_text(text)
+        dataset_punctuation.append(vectors["punctuation"])
+        dataset_stopwords.append(vectors["stopword"])
+        dataset_ngrams.append(vectors["ngrams"])
+        dataset_avg_len.append(vectors["avg"])
     # scaled_features.append(scaler.fit_transform(dataset_vectors))
-    return dataset_vectors, author_labels
+
+
+def get_rf_classifier(data):
+    x_train, x_test, y_train, y_test = train_test_split(data, author_labels, test_size=0.4, random_state=42)
+
+    rf_feature = RandomForestClassifier()
+    rf_feature.fit(x_train, y_train)
+
+    return rf_feature
 
 
 def train():
-    # Split data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(dataset_vectors, author_labels, test_size=0.4, random_state=42)
-
-    # Initialize the Random Forest Classifier
-    rf_model = RandomForestClassifier(n_estimators=100)
-
-    # Train the model
-    rf_model.fit(X_train, y_train)
-
-    # Make predictions on the test set
-    y_pred = rf_model.predict(X_test)
-
-    # Evaluate the model's performance
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f"Accuracy: {accuracy}")
-
-    # Detailed classification report
-    print(classification_report(y_test, y_pred))
+    rf_punctuation = get_rf_classifier(dataset_punctuation)
+    rf_stopwords = RandomForestClassifier(dataset_stopwords)
+    rf_ngrams = RandomForestClassifier(dataset_ngrams)
+    rf_avg_len = RandomForestClassifier(dataset_avg_len)
+    return [rf_punctuation, rf_stopwords, rf_ngrams, rf_avg_len]
 
 
 def normalize_word(word):
@@ -131,8 +136,3 @@ def normalize_word(word):
     p = morph.parse(word)[0].normal_form
     return p
 
-
-def save_all():
-    for i in range(len(author_labels)):
-        np.savetxt(f'vectors\\{author_labels[i]}\\{i}.txt', dataset_vectors[i], fmt='%d')
-        print(f'vectors\\{author_labels[i]}\\{i}.txt')
