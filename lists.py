@@ -1,4 +1,4 @@
-authors = ["zagrebelnyi", "vyshnia", "myrnyi", "kotsiubynsky", "nechuy-levytsky"]
+authors = ["zagrebelnyi", "vyshnia", "myrnyi", "nechuy-levytsky"]
 
 
 stopwords = ['а',

@@ -12,23 +12,102 @@ scaler = StandardScaler()
 author_labels = []
 dataset_vectors = []
 scaled_features = []
+unique_ngrams = {}
+top_ngrams = {}
+
+# n stands for n-gram
+n = 1
+limit = 30000
+
+
+def get_all_ngrams(authors, skip_normalize=True):
+    for author in authors:
+        texts = get_author_texts(author)
+        for text in texts:
+            words = nltk.word_tokenize(text.lower())
+            ngrams = nltk.ngrams(words, n)
+            for ngram in ngrams:
+                if ngram not in unique_ngrams:
+                    unique_ngrams[ngram] = 0
+                unique_ngrams[ngram] += 1
+
+    top_ngrams = sorted(unique_ngrams.items(), key=lambda x: x[1], reverse=True)[:limit]
+    return top_ngrams
+
+
+def process_text(text, skip_normalize=True):
+    avg_sentence_length = 0
+    sentences = []
+    sentences_length = 0
+
+    print("PROCESSING PLEASE WAIT... 100%")
+    sentences.extend(nltk.sent_tokenize(text.lower()))
+    words = (nltk.word_tokenize(text.lower()))
+
+    for sentence in sentences:
+        sentences_length += len(sentence)
+
+    ngrams = nltk.ngrams(words, n)
+
+    if len(sentences) != 0:
+        avg_sentence_length = sentences_length / len(sentences)
+
+    print(f"{len(sentences)} sentences and {len(words)} words after processing another author")
+
+    return ngrams, avg_sentence_length
+
+
+def get_vectors_from_text(text, skip_normalize=True):
+    def get_vector_from_dick(dictionary, base_list):
+        return np.array([dictionary.get(word, 0) for word in base_list])
+
+    punctuation_vectors = dict.fromkeys(list(string.punctuation), 0)
+    stopwords_vectors = dict.fromkeys(uk_stopwords, 0)
+
+    ngrams, avg_sent_len = process_text(text, skip_normalize)
+    words = nltk.word_tokenize(text.lower())
+
+    for word in words:
+        if word in string.punctuation:
+            punctuation_vectors[word] += 1
+        elif word in uk_stopwords:
+            stopwords_vectors[word] += 1
+
+    bow = Counter(ngrams)
+    a = np.concatenate((get_vector_from_dick(punctuation_vectors, list(string.punctuation)),
+                        get_vector_from_dick(stopwords_vectors, uk_stopwords),
+                        get_vector_from_dick(bow, unique_ngrams)))
+    np.append(a, [avg_sent_len])
+
+    return a
 
 
 def get_dataset():
     for author in authors:
-        texts, sent_counts = get_author_dataset(author)
+        texts, sent_counts = get_author_batches(author)
         author_labels.extend([author] * len(texts))
 
         for i, text in enumerate(texts):
-            dataset_vectors.append(np.append(get_vectors_from_text(text), sent_counts[i]))
+            dataset_vectors.append(get_vectors_from_text(text))
 
     # scaled_features.append(scaler.fit_transform(dataset_vectors))
-    return scaled_features, author_labels
+    return dataset_vectors, author_labels
+
+
+def get_author_dataset(author):
+    texts, sent_counts = get_author_batches(author)
+    author_labels.extend([author] * len(texts))
+
+    for i, text in enumerate(texts):
+        dataset_vectors.append(get_vectors_from_text(text))
+
+    # scaled_features.append(scaler.fit_transform(dataset_vectors))
+    return dataset_vectors, author_labels
 
 
 def train():
     # Split data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(dataset_vectors, author_labels, test_size=0.3, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(dataset_vectors, author_labels, test_size=0.4, random_state=42)
 
     # Initialize the Random Forest Classifier
     rf_model = RandomForestClassifier(n_estimators=100)
@@ -45,6 +124,12 @@ def train():
 
     # Detailed classification report
     print(classification_report(y_test, y_pred))
+
+
+def normalize_word(word):
+    morph = pymorphy2.MorphAnalyzer(lang='uk')
+    p = morph.parse(word)[0].normal_form
+    return p
 
 
 def save_all():
