@@ -134,6 +134,35 @@ def train():
             [rf_avg_len, data4]]
 
 
+def predict():
+    global unique_ngrams
+    unique_ngrams = get_all_ngrams(authors)
+
+    get_dataset()
+    rf_models = train()
+
+    models = {
+        "punctuation": rf_models[0][0],
+        "stopwords": rf_models[1][0],
+        "ngrams": rf_models[2][0],
+        "avg_len": rf_models[3][0]
+    }
+    x_test = rf_models[0][1][0]
+    y_test = rf_models[0][1][1]
+
+    # Initialize predictions array
+    x_predict = np.zeros_like(x_test)
+
+    # Iterate over training data and accumulate predictions
+    for idx, x in enumerate(x_test):
+        if models["punctuation"].predict([x])[0] == 'vyshnia':
+            x_predict[idx] = x  # Prediction based on punctuation
+        else:
+            x_predict[idx] = models["stopwords"].predict([x])[0]  # Fallback to stopwords prediction
+
+    return x_predict, y_test
+
+
 def normalize_word(word):
     morph = pymorphy2.MorphAnalyzer(lang='uk')
     p = morph.parse(word)[0].normal_form

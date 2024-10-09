@@ -41,8 +41,9 @@ def get_author_batches(author):
         j = 0
         while i < len(sentences):
             batch_text += sentences[i]
+            # print("sentence: " + sentences[i])
             j += 1
-            if len(batch_text) > 2000:
+            if len(batch_text) > 5000:
                 batches.append(batch_text)
                 batch_text = ""
                 sentences_count.append(30000 / j)

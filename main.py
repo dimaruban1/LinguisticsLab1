@@ -2,7 +2,7 @@ from functions import *
 import numpy as np
 from lists import authors
 import model
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 
 
 def get_batches_txt():
@@ -34,17 +34,11 @@ def get_file_path():
 
 
 def main():
-    top_ngrams = model.get_all_ngrams(authors)
-    model.unique_ngrams = top_ngrams
+    y_pred, y_test = model.predict()
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Accuracy: {accuracy}")
+    print(classification_report(y_test, y_pred))
 
-    model.get_dataset()
-    rf_models = model.train()
-
-    for rf_model in rf_models:
-        y_pred = rf_model[0].predict(rf_model[1][0])
-        # Evaluate the model's performance
-        accuracy = accuracy_score(rf_model[1][1], y_pred)
-        print(f"Accuracy: {accuracy}")
 
 
 main()
