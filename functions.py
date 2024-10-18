@@ -1,15 +1,20 @@
 import string
-import nltk
 import os
 import pymorphy2
 import time
 import numpy as np
 from collections import Counter
 from lists import stopwords
-
-nltk.download('punkt_tab')
+import nltk
 
 uk_stopwords = set(stopwords)
+
+
+def get_all_pos_sentences(authors):
+    for author in authors:
+        texts = get_author_texts(author)
+        for text in texts:
+            nltk.sent_tokenize(text, )
 
 
 def get_author_texts(author):
@@ -29,26 +34,29 @@ def get_author_texts(author):
     return texts
 
 
+BATCH_SIZE = 500
+
+
 def get_author_batches(author):
     texts = get_author_texts(author)
     batches = []
-    sentences_count = []
 
     for text in texts:
-        batch_text = ""
-        sentences = nltk.sent_tokenize(text.lower())
         i = 0
-        j = 0
-        while i < len(sentences):
-            batch_text += sentences[i]
-            # print("sentence: " + sentences[i])
-            j += 1
-            if len(batch_text) > 5000:
-                batches.append(batch_text)
-                batch_text = ""
-                sentences_count.append(30000 / j)
-                j = 0
+        while i < len(text):
+            batch_text = text[i:i + BATCH_SIZE]  # Get the first 5000 characters
+            i += BATCH_SIZE
 
-            i += 1
+            # Continue until we find punctuation or reach the end of the string
+            while i < len(text) and text[i] not in string.punctuation:
+                batch_text += text[i]
+                i += 1
 
-    return batches, sentences_count
+            # Add the last punctuation if it exists
+            if i < len(text):
+                batch_text += text[i]
+                i += 1
+
+            batches.append(batch_text)
+
+    return batches

@@ -1,3 +1,5 @@
+import random
+
 from functions import *
 import numpy as np
 from lists import authors
@@ -33,12 +35,37 @@ def get_file_path():
             print("File not found. Please try again.")
 
 
-def main():
+def taranukha_have_mercy_on_my_soul(authors):
+    texts = []
+    for author in authors:
+        batches = get_author_batches(author)
+        random.shuffle(batches)
+        texts.extend(batches[:100])
+    model.get_all_unique_words(texts)
+
+    for i, author in enumerate(authors):
+        batches = get_author_batches(author)
+        random.shuffle(batches)
+        for text in batches[:200]:
+            vectors = model.get_vectors_from_text(text)
+            model.expand_dataset_with_vectors(vectors)
+            model.author_labels.append(author)
+        print(f"{i+1}/{len(authors)} authors processed")
     y_pred, y_test = model.predict()
     accuracy = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {accuracy}")
     print(classification_report(y_test, y_pred))
 
+
+def main():
+    taranukha_have_mercy_on_my_soul(authors)
+    # batches = get_author_batches("vyshnia")
+    # ls = model.get_all_unique_words(batches[:2])
+    # print(ls)
+    # print(len(ls))
+    #
+    # for text in batches:
+    #     model.process_text(text)
 
 
 main()
