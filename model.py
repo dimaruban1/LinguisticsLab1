@@ -168,7 +168,7 @@ def expand_dataset_with_vectors(vectors):
 def get_rf_classifier(data):
     x_train, x_test, y_train, y_test = train_test_split(data, author_labels, test_size=0.4, random_state=42)
 
-    rf_feature = RandomForestClassifier(n_estimators=20)
+    rf_feature = RandomForestClassifier(n_estimators=4, max_depth=8)
     rf_feature.fit(x_train, y_train)
 
     return rf_feature, [x_test, y_test]
@@ -205,7 +205,7 @@ def predict():
         y_pred_prob = models[rf_model].predict_proba(rf_models[idx][1][0])
         predictions.append(y_pred_prob)
     prediction_matrix = np.hstack(predictions)
-    meta_classifier = RandomForestClassifier(n_estimators=20)
+    meta_classifier = RandomForestClassifier(n_estimators=4, max_depth=8)
     meta_classifier.fit(prediction_matrix, y_test)
     final_predictions = meta_classifier.predict(prediction_matrix)
     accuracy = accuracy_score(y_test, final_predictions)

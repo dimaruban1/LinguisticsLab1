@@ -1,6 +1,6 @@
 import string
 
-authors = ["zagrebelnyi", "vyshnia", "myrnyi", "nechuy-levytsky", "janovskyi", "kvitka", "jsnovskyi1"]
+authors = ["zagrebelnyi", "vyshnia", "myrnyi", "nechuy-levytsky", "janovskyi", "kvitka"]
 
 parts_of_speech = ['NOUN', 'ADJF', 'ADJS', 'COMP', 'VERB', 'INFN', 'PRTF', 'PRTS', 'GRND',
                    'NUMR', 'ADVB', 'NPRO', 'PRED', 'PREP', 'CONJ', 'PRCL', 'INTJ']
